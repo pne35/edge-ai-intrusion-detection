@@ -1,29 +1,37 @@
-import pandas as pd
-import numpy as np
+from pathlib import Path
+
 import joblib
-import matplotlib.pyplot as plt
-import seaborn as sns
+import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
-    classification_report, confusion_matrix, accuracy_score,
-    precision_score, recall_score, f1_score, roc_auc_score
+    accuracy_score,
+    classification_report,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
 )
+
+ROOT = Path(__file__).resolve().parents[1]
+DATA = ROOT / "data"
+ARTIFACTS = ROOT / "artifacts"
+
 
 def main():
     print("[+] Phase 4: Training Intrusion Detection ML Models...")
 
-    # 1. Load Processed Phase 3 Datasets
-    X_train = pd.read_csv("X_train.csv")
-    X_test = pd.read_csv("X_test.csv")
-    y_train = pd.read_csv("y_train.csv").values.ravel()
-    y_test = pd.read_csv("y_test.csv").values.ravel()
+    # 1. Load processed Phase 3 datasets
+    X_train = pd.read_csv(DATA / "X_train.csv")
+    X_test = pd.read_csv(DATA / "X_test.csv")
+    y_train = pd.read_csv(DATA / "y_train.csv").values.ravel()
+    y_test = pd.read_csv(DATA / "y_test.csv").values.ravel()
 
-    # 2. Instantiate and Train Random Forest Classifier
+    # 2. Train Random Forest classifier
     rf_model = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
     rf_model.fit(X_train, y_train)
     print("[+] Random Forest model training complete.")
 
-    # 3. Model Evaluation on Unseen Test Data
+    # 3. Model evaluation on the held-out test split
     y_pred = rf_model.predict(X_test)
     y_pred_proba = rf_model.predict_proba(X_test)[:, 1]
 
@@ -33,30 +41,32 @@ def main():
     f1 = f1_score(y_test, y_pred)
     roc_auc = roc_auc_score(y_test, y_pred_proba)
 
-    print("\n" + "="*45)
+    print("\n" + "=" * 45)
     print("      PHASE 4 EVALUATION METRICS SUMMARY     ")
-    print("="*45)
+    print("=" * 45)
     print(f"Accuracy:  {acc * 100:.4f}%")
     print(f"Precision: {prec * 100:.4f}%")
     print(f"Recall:    {rec * 100:.4f}%")
     print(f"F1-Score:  {f1 * 100:.4f}%")
     print(f"ROC-AUC:   {roc_auc:.4f}")
-    print("="*45)
+    print("=" * 45)
 
     print("\nDetailed Classification Report:")
-    print(classification_report(y_test, y_pred, target_names=['Benign (0)', 'Malicious (1)']))
+    print(classification_report(y_test, y_pred, target_names=["Benign (0)", "Malicious (1)"]))
 
-    # 4. Save Model Artifact for Live Real-Time Inference (Phase 5)
-    joblib.dump(rf_model, "ids_rf_model.pkl")
-    print("[+] Saved trained model artifact to 'ids_rf_model.pkl'.")
+    # 4. Save model artifact for live inference
+    ARTIFACTS.mkdir(parents=True, exist_ok=True)
+    joblib.dump(rf_model, ARTIFACTS / "ids_rf_model.pkl")
+    print("[+] Saved trained model artifact to artifacts/ids_rf_model.pkl.")
 
-    # 5. Feature Importance Extraction
+    # 5. Feature importance extraction
     importances = rf_model.feature_importances_
     features = X_train.columns
 
     print("\nFeature Importances:")
     for feat, imp in sorted(zip(features, importances), key=lambda x: x[1], reverse=True):
         print(f" - {feat:15s}: {imp * 100:.2f}%")
+
 
 if __name__ == "__main__":
     main()
