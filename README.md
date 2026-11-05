@@ -79,6 +79,10 @@ The next evaluation stage is to expand the dataset across multiple traffic types
 
 This distinction is important to the project: a high score on a homogeneous dataset is not the same thing as demonstrating robust intrusion detection.
 
+## Technical log book
+
+The original technical log book is in `docs/Technical_Log_Book.pdf`. A companion amendment records corrections to the evaluation methodology, live-detection limitations, benchmark interpretation and final critical reflection: [`docs/Technical_Log_Book_Amendments.md`](docs/Technical_Log_Book_Amendments.md).
+
 ## Project structure
 
 ```text
